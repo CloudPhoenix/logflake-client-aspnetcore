@@ -86,7 +86,7 @@ public class LogFlakeMiddleware
             _logFlakeService.WriteLog(level, logMessage, correlationService.Correlation, content);
         }
 
-        if (httpContext.Response.StatusCode >= StatusCodes.Status400BadRequest && httpContext.Response.ContentLength is null)
+        if (httpContext.Response.StatusCode >= StatusCodes.Status400BadRequest && !httpContext.Response.HasStarted)
         {
             await _logFlakeMiddlewareOptions.OnError(httpContext);
         }
@@ -105,7 +105,10 @@ public class LogFlakeMiddleware
                 _logFlakeService.WriteException(ex, correlation);
             }
 
-            await _logFlakeMiddlewareOptions.OnError(httpContext);
+            if (!httpContext.Response.HasStarted)
+            {
+                await _logFlakeMiddlewareOptions.OnError(httpContext);
+            }
         }
     }
 }
