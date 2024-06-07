@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <PackageId>LogFlake.Client.AspNetCore</PackageId>
-    <Version>1.5.0</Version>
+    <Version>1.5.1</Version>
     <Authors>CloudPhoenix Srl</Authors>
     <Company>CloudPhoenix Srl</Company>
     <TargetFramework>netstandard2.1</TargetFramework>
@@ -30,6 +30,6 @@
     <PackageReference Include="Microsoft.AspNetCore.Http.Extensions" Version="2.2.0" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Features" Version="5.0.17" />
     <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.2.2" />
-    <PackageReference Include="LogFlake.Client.NetCore" Version="1.5.0" />
+    <PackageReference Include="LogFlake.Client.NetCore" Version="1.5.1" />
   </ItemGroup>
 </Project>
