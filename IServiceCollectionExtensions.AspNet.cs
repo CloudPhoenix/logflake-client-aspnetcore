@@ -6,10 +6,8 @@ namespace NLogFlake;
 
 public static class IServiceCollectionExtensionsAspNet
 {
-    public static IServiceCollection AddLogFlake(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection ConfigureLogFlakeMiddlewareOptions(this IServiceCollection services, IConfiguration configuration)
     {
-        IServiceCollectionExtensions.AddLogFlake(services, configuration);
-
         _ = services.Configure<LogFlakeMiddlewareSettingsOptions>(configuration.GetSection(LogFlakeMiddlewareSettingsOptions.SectionName));
 
         return services;

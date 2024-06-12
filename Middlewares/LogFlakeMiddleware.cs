@@ -53,6 +53,15 @@ public class LogFlakeMiddleware
             performance = _logFlakeService.MeasurePerformance(endpointForPerformance);
         }
 
+        using MemoryStream customResponseStream = new();
+        Stream originalResponseStream = null!;
+        bool includeResponse = _logFlakeMiddlewareSettingsOptions.LogResponse;
+        if (includeResponse)
+        {
+            originalResponseStream = httpContext.Response.Body;
+            httpContext.Response.Body = customResponseStream;
+        }
+
         if (_logFlakeMiddlewareOptions.GlobalExceptionHandler)
         {
             await tryNext(httpContext, ignoreLogProcessing, correlationService.Correlation);
@@ -81,9 +90,15 @@ public class LogFlakeMiddleware
         {
             string logMessage = $"{httpContext.Request.Method} {httpContext.Request.Path} status {httpContext.Response.StatusCode} in {performance!.Stop():N0} ms";
 
-            Dictionary<string, object> content = await HttpContextHelper.GetLogParametersAsync(httpContext, _logFlakeMiddlewareSettingsOptions.LogResponse);
+            Dictionary<string, object> content = await HttpContextHelper.GetLogParametersAsync(httpContext, includeResponse);
 
             _logFlakeService.WriteLog(level, logMessage, correlationService.Correlation, content);
+        }
+
+        if (includeResponse)
+        {
+            httpContext.Request.Body = originalResponseStream;
+            
         }
 
         if (httpContext.Response.StatusCode >= StatusCodes.Status400BadRequest && !httpContext.Response.HasStarted)

@@ -1,4 +1,4 @@
-<h1 align="center">LogFlake Client .NET Core <img alt="Version" src="https://img.shields.io/badge/version-1.5.1-blue.svg?cacheSeconds=2592000" /></h1>
+# LogFlake Client .NET Core ![Version](https://img.shields.io/badge/version-1.5.2-blue.svg?cacheSeconds=2592000)
 
 > This repository contains the sources for the client-side components of the LogFlake product suite for applications logs and performance collection for ASP.NET applications.
 
@@ -10,8 +10,8 @@
 |:-:|:-:|:-:|
 | [LogFlake.Client.AspNetCore](https://www.nuget.org/packages/LogFlake.Client.AspNetCore) | ![NuGet Version](https://img.shields.io/nuget/v/logflake.client.aspnetcore) | ![NuGet Downloads](https://img.shields.io/nuget/dt/logflake.client.aspnetcore) |
 
-## Prerequisites
-You also need to install & configure [LogFlake.Client.NetCore](https://www.nuget.org/packages/LogFlake.Client.NetCore).    
+## Dependecies
+This package depends on [LogFlake.Client.NetCore](https://www.nuget.org/packages/LogFlake.Client.NetCore).    
 Please refer to the documentation of that package for usage instructions.
 
 ## Usage
@@ -25,12 +25,16 @@ Please refer to the documentation of that package for usage instructions.
 ```
 All of them are optional, if a property it's missing, the default value is `false`;
 
-2. Create a class that implements `IConfigureOptions<LogFlakeMiddlewareOptions>` and configure each property;
-3. Register that class as a Singleton:
+2. Create a class (name it something like `ConfigureLogFlakeMiddlewareOptions`) that implements `IConfigureOptions<LogFlakeMiddlewareOptions>` and configure each property;
+3. Register your class as a Singleton:
 ```csharp
 services.AddSingleton<IConfigureOptions<LogFlakeMiddlewareOptions>, ConfigureLogFlakeMiddlewareOptions>();
 ```
-4. Register the middleare on your `WebApplication`
+4. After calling `services.AddLogFlake(configuration);`, add the following line of code:
+```csharp
+services.ConfigureLogFlakeMiddlewareOptions(configuration);
+```
+5. Register the middleare on your `WebApplication`
 ```csharp
 app.UseLogFlakeMiddleware();
 ```
