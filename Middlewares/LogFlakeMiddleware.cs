@@ -53,13 +53,13 @@ public class LogFlakeMiddleware
             performance = _logFlakeService.MeasurePerformance(endpointForPerformance);
         }
 
-        using MemoryStream customResponseStream = new();
         Stream originalResponseStream = null!;
+        using MemoryStream memoryStream = new();
         bool includeResponse = _logFlakeMiddlewareSettingsOptions.LogResponse;
         if (includeResponse)
         {
             originalResponseStream = httpContext.Response.Body;
-            httpContext.Response.Body = customResponseStream;
+            httpContext.Response.Body = memoryStream;
         }
 
         if (_logFlakeMiddlewareOptions.GlobalExceptionHandler)
@@ -69,6 +69,18 @@ public class LogFlakeMiddleware
         else
         {
             await _next(httpContext);
+        }
+
+        if (NotExistingEndpoint(httpContext) && !_logFlakeMiddlewareSettingsOptions.LogNotFoundErrors)
+        {
+            return;
+        }
+
+        string response = string.Empty;
+        if (includeResponse)
+        {
+            memoryStream.Position = 0;
+            response = new StreamReader(memoryStream).ReadToEnd();
         }
 
         LogLevels level = LogLevels.DEBUG;
@@ -85,25 +97,24 @@ public class LogFlakeMiddleware
                 break;
         }
 
-        ignoreLogProcessing |= httpContext.Response.StatusCode == StatusCodes.Status404NotFound && !_logFlakeMiddlewareSettingsOptions.LogNotFoundErrors;
-        if (_logFlakeMiddlewareSettingsOptions.LogRequest && !ignoreLogProcessing)
+        if (httpContext.Response.StatusCode >= StatusCodes.Status400BadRequest && !httpContext.Response.HasStarted)
         {
-            string logMessage = $"{httpContext.Request.Method} {httpContext.Request.Path} status {httpContext.Response.StatusCode} in {performance!.Stop():N0} ms";
-
-            Dictionary<string, object> content = await HttpContextHelper.GetLogParametersAsync(httpContext, includeResponse);
-
-            _logFlakeService.WriteLog(level, logMessage, correlationService.Correlation, content);
+            await _logFlakeMiddlewareOptions.OnError(httpContext);
         }
 
         if (includeResponse)
         {
-            httpContext.Request.Body = originalResponseStream;
-            
+            memoryStream.Position = 0;
+            await memoryStream.CopyToAsync(originalResponseStream);
         }
 
-        if (httpContext.Response.StatusCode >= StatusCodes.Status400BadRequest && !httpContext.Response.HasStarted)
+        if (_logFlakeMiddlewareSettingsOptions.LogRequest && !ignoreLogProcessing)
         {
-            await _logFlakeMiddlewareOptions.OnError(httpContext);
+            string logMessage = $"{httpContext.Request.Method} {httpContext.Request.Path} status {httpContext.Response.StatusCode} in {performance!.Stop():N0} ms";
+
+            Dictionary<string, object> content = await HttpContextHelper.GetLogParametersAsync(httpContext, response);
+
+            _logFlakeService.WriteLog(level, logMessage, correlationService.Correlation, content);
         }
     }
 
@@ -126,4 +137,6 @@ public class LogFlakeMiddleware
             }
         }
     }
+
+    private static bool NotExistingEndpoint(HttpContext httpContext) => httpContext.Response.StatusCode == StatusCodes.Status404NotFound && !httpContext.Response.Headers.Any();
 }

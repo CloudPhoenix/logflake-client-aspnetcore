@@ -1,4 +1,4 @@
-# LogFlake Client .NET Core ![Version](https://img.shields.io/badge/version-1.5.2-blue.svg?cacheSeconds=2592000)
+# LogFlake Client .NET Core ![Version](https://img.shields.io/badge/version-1.5.3-blue.svg?cacheSeconds=2592000)
 
 > This repository contains the sources for the client-side components of the LogFlake product suite for applications logs and performance collection for ASP.NET applications.
 

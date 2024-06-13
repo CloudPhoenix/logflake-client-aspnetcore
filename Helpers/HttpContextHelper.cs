@@ -5,7 +5,7 @@ namespace NLogFlake.Helpers;
 
 internal static class HttpContextHelper
 {
-    internal static async Task<Dictionary<string, object>> GetLogParametersAsync(HttpContext httpContext, bool includeResponse)
+    internal static async Task<Dictionary<string, object>> GetLogParametersAsync(HttpContext httpContext, string response)
     {
         string? request = await GetStringBodyAsync(httpContext.Request.Body);
         Dictionary<string, object> exceptionParams = new()
@@ -20,12 +20,11 @@ internal static class HttpContextHelper
             exceptionParams.Add("requestBody", request);
         }
 
-        if (includeResponse)
+        if (!string.IsNullOrEmpty(response))
         {
             exceptionParams.Add("responseHeaders", httpContext.Response.Headers);
             exceptionParams.Add("responseStatus", httpContext.Response.StatusCode);
 
-            string? response = await GetStringBodyAsync(httpContext.Response.Body);
             if (!string.IsNullOrWhiteSpace(response))
             {
                 exceptionParams.Add("responseBody", response);
