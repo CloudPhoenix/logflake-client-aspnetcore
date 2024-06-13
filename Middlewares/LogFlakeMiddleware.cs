@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.Extensions.Options;
 using NLogFlake.Helpers;
@@ -53,13 +53,13 @@ public class LogFlakeMiddleware
             performance = _logFlakeService.MeasurePerformance(endpointForPerformance);
         }
 
-        using MemoryStream customResponseStream = new();
         Stream originalResponseStream = null!;
+        using MemoryStream memoryStream = new();
         bool includeResponse = _logFlakeMiddlewareSettingsOptions.LogResponse;
         if (includeResponse)
         {
             originalResponseStream = httpContext.Response.Body;
-            httpContext.Response.Body = customResponseStream;
+            httpContext.Response.Body = memoryStream;
         }
 
         if (_logFlakeMiddlewareOptions.GlobalExceptionHandler)
@@ -69,6 +69,13 @@ public class LogFlakeMiddleware
         else
         {
             await _next(httpContext);
+        }
+
+        string response = string.Empty;
+        if (includeResponse)
+        {
+            memoryStream.Position = 0;
+            response = new StreamReader(memoryStream).ReadToEnd();
         }
 
         LogLevels level = LogLevels.DEBUG;
@@ -85,25 +92,25 @@ public class LogFlakeMiddleware
                 break;
         }
 
+        if (httpContext.Response.StatusCode >= StatusCodes.Status400BadRequest && !httpContext.Response.HasStarted)
+        {
+            await _logFlakeMiddlewareOptions.OnError(httpContext);
+        }
+
+        if (includeResponse)
+        {
+            memoryStream.Position = 0;
+            await memoryStream.CopyToAsync(originalResponseStream);
+        }
+
         ignoreLogProcessing |= httpContext.Response.StatusCode == StatusCodes.Status404NotFound && !_logFlakeMiddlewareSettingsOptions.LogNotFoundErrors;
         if (_logFlakeMiddlewareSettingsOptions.LogRequest && !ignoreLogProcessing)
         {
             string logMessage = $"{httpContext.Request.Method} {httpContext.Request.Path} status {httpContext.Response.StatusCode} in {performance!.Stop():N0} ms";
 
-            Dictionary<string, object> content = await HttpContextHelper.GetLogParametersAsync(httpContext, includeResponse);
+            Dictionary<string, object> content = await HttpContextHelper.GetLogParametersAsync(httpContext, response);
 
             _logFlakeService.WriteLog(level, logMessage, correlationService.Correlation, content);
-        }
-
-        if (includeResponse)
-        {
-            httpContext.Request.Body = originalResponseStream;
-            
-        }
-
-        if (httpContext.Response.StatusCode >= StatusCodes.Status400BadRequest && !httpContext.Response.HasStarted)
-        {
-            await _logFlakeMiddlewareOptions.OnError(httpContext);
         }
     }
 
