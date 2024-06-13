@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.Extensions.Options;
 using NLogFlake.Helpers;
@@ -71,6 +71,11 @@ public class LogFlakeMiddleware
             await _next(httpContext);
         }
 
+        if (NotExistingEndpoint(httpContext) && !_logFlakeMiddlewareSettingsOptions.LogNotFoundErrors)
+        {
+            return;
+        }
+
         string response = string.Empty;
         if (includeResponse)
         {
@@ -103,7 +108,6 @@ public class LogFlakeMiddleware
             await memoryStream.CopyToAsync(originalResponseStream);
         }
 
-        ignoreLogProcessing |= httpContext.Response.StatusCode == StatusCodes.Status404NotFound && !_logFlakeMiddlewareSettingsOptions.LogNotFoundErrors;
         if (_logFlakeMiddlewareSettingsOptions.LogRequest && !ignoreLogProcessing)
         {
             string logMessage = $"{httpContext.Request.Method} {httpContext.Request.Path} status {httpContext.Response.StatusCode} in {performance!.Stop():N0} ms";
@@ -133,4 +137,6 @@ public class LogFlakeMiddleware
             }
         }
     }
+
+    private static bool NotExistingEndpoint(HttpContext httpContext) => httpContext.Response.StatusCode == StatusCodes.Status404NotFound && !httpContext.Response.Headers.Any();
 }
