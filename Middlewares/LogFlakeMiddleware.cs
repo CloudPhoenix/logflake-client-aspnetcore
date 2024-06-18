@@ -76,7 +76,7 @@ public class LogFlakeMiddleware
             return;
         }
 
-        string response = string.Empty;
+        string? response = null;
         if (includeResponse)
         {
             memoryStream.Position = 0;
@@ -112,7 +112,7 @@ public class LogFlakeMiddleware
         {
             string logMessage = $"{httpContext.Request.Method} {httpContext.Request.Path} status {httpContext.Response.StatusCode} in {performance!.Stop():N0} ms";
 
-            Dictionary<string, object> content = await HttpContextHelper.GetLogParametersAsync(httpContext, response);
+            Dictionary<string, object> content = await HttpContextHelper.GetLogParametersAsync(httpContext, _logFlakeMiddlewareSettingsOptions.ClientIdSelector, response);
 
             _logFlakeService.WriteLog(level, logMessage, correlationService.Correlation, content);
         }

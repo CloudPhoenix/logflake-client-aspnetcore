@@ -1,37 +1,50 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
+
+using static NLogFlake.Constants.LogParameterConstants;
 
 namespace NLogFlake.Helpers;
 
 internal static class HttpContextHelper
 {
-    internal static async Task<Dictionary<string, object>> GetLogParametersAsync(HttpContext httpContext, string response)
+    internal static async Task<Dictionary<string, object>> GetLogParametersAsync(HttpContext httpContext, string? clientIdSelector, string? response)
     {
-        string? request = await GetStringBodyAsync(httpContext.Request.Body);
-        Dictionary<string, object> exceptionParams = new()
+        Dictionary<string, object> logParameters = new()
         {
-            {"requestUri", new Uri(httpContext.Request.GetDisplayUrl())},
-            {"requestMethod", httpContext.Request.Method},
-            {"requestHeaders", httpContext.Request.Headers},
+            { RequestUriKey, new Uri(httpContext.Request.GetDisplayUrl()) },
+            { RequestMethodKey, httpContext.Request.Method },
+            { RequestHeadersKey, httpContext.Request.Headers },
         };
 
+        string? request = await GetStringBodyAsync(httpContext.Request.Body);
         if (!string.IsNullOrWhiteSpace(request))
         {
-            exceptionParams.Add("requestBody", request);
+            logParameters.Add(RequestBodyKey, request);
+        }
+
+        if (!string.IsNullOrEmpty(clientIdSelector) && httpContext.User is not null)
+        {
+            Claim clientIdClaim = httpContext.User.FindFirst(clientIdSelector);
+
+            if (clientIdClaim is not null && !string.IsNullOrWhiteSpace(clientIdClaim.Value))
+            {
+                logParameters.Add(ClientIdKey, clientIdClaim.Value);
+            }
         }
 
         if (!string.IsNullOrEmpty(response))
         {
-            exceptionParams.Add("responseHeaders", httpContext.Response.Headers);
-            exceptionParams.Add("responseStatus", httpContext.Response.StatusCode);
+            logParameters.Add(ResponseHeadersKey, httpContext.Response.Headers);
+            logParameters.Add(ResponseStatusKey, httpContext.Response.StatusCode);
 
             if (!string.IsNullOrWhiteSpace(response))
             {
-                exceptionParams.Add("responseBody", response);
+                logParameters.Add(ResponseBodyKey, response);
             }
         }
 
-        return exceptionParams;
+        return logParameters;
     }
 
     internal static async Task<string> GetStringBodyAsync(Stream body)
