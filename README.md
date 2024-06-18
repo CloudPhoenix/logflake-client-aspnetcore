@@ -20,10 +20,12 @@ Please refer to the documentation of that package for usage instructions.
 "LogFlakeMiddlewareSettings": {
     "LogRequest": true,
     "LogResponse": true,
-    "LogNotFoundErrors": true
+    "LogNotFoundErrors": true,
+    "ClientIdSelector": ""
 },
 ```
-All of them are optional, if a property it's missing, the default value is `false`;
+All of them are optional, if a boolean property it's missing, the default value is `false`;
+`ClientIdSelector` should be the key of the OAuth Claim that contains what you consider a client identifier, its value will be added to the log entry as `clientId`.
 
 2. Create a class (name it something like `ConfigureLogFlakeMiddlewareOptions`) that implements `IConfigureOptions<LogFlakeMiddlewareOptions>` and configure each property;
 3. Register your class as a Singleton:
