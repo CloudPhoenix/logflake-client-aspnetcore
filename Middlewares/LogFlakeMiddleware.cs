@@ -55,12 +55,8 @@ public class LogFlakeMiddleware
 
         Stream originalResponseStream = null!;
         using MemoryStream memoryStream = new();
-        bool includeResponse = _logFlakeMiddlewareSettingsOptions.LogResponse;
-        if (includeResponse)
-        {
-            originalResponseStream = httpContext.Response.Body;
-            httpContext.Response.Body = memoryStream;
-        }
+        originalResponseStream = httpContext.Response.Body;
+        httpContext.Response.Body = memoryStream;
 
         if (_logFlakeMiddlewareOptions.GlobalExceptionHandler)
         {
@@ -77,7 +73,7 @@ public class LogFlakeMiddleware
         }
 
         string? response = null;
-        if (includeResponse)
+        if (_logFlakeMiddlewareSettingsOptions.LogResponse)
         {
             memoryStream.Position = 0;
             response = new StreamReader(memoryStream).ReadToEnd();
@@ -97,16 +93,13 @@ public class LogFlakeMiddleware
                 break;
         }
 
-        if (httpContext.Response.StatusCode >= StatusCodes.Status400BadRequest && !httpContext.Response.HasStarted)
+        if (httpContext.Response.StatusCode >= StatusCodes.Status400BadRequest && EmptyResponseBody(httpContext))
         {
             await _logFlakeMiddlewareOptions.OnError(httpContext);
         }
 
-        if (includeResponse)
-        {
-            memoryStream.Position = 0;
-            await memoryStream.CopyToAsync(originalResponseStream);
-        }
+        memoryStream.Position = 0;
+        await memoryStream.CopyToAsync(originalResponseStream);
 
         if (_logFlakeMiddlewareSettingsOptions.LogRequest && !ignoreLogProcessing)
         {
@@ -139,4 +132,6 @@ public class LogFlakeMiddleware
     }
 
     private static bool NotExistingEndpoint(HttpContext httpContext) => httpContext.Response.StatusCode == StatusCodes.Status404NotFound && !httpContext.Response.Headers.Any();
+
+    private static bool EmptyResponseBody(HttpContext httpContext) => httpContext.Response.Body is null || httpContext.Response.Body.Length == 0;
 }
