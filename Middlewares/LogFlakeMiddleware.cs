@@ -28,7 +28,7 @@ public class LogFlakeMiddleware
         _logFlakeMiddlewareSettingsOptions = logFlakeMiddlewareSettingsOptions.Value;
     }
 
-    public async Task InvokeAsync(HttpContext httpContext, ICorrelationService correlationService)
+    public async Task InvokeAsync(HttpContext httpContext, ICorrelationService correlationService, IParameterService parameterService)
     {
         if (httpContext is null)
         {
@@ -106,6 +106,11 @@ public class LogFlakeMiddleware
             string logMessage = $"{httpContext.Request.Method} {httpContext.Request.Path} status {httpContext.Response.StatusCode} in {performance!.Stop():N0} ms";
 
             Dictionary<string, object> content = await HttpContextHelper.GetLogParametersAsync(httpContext, _logFlakeMiddlewareSettingsOptions.ClientIdSelector, response);
+
+            if (!parameterService.IsEmpty())
+            {
+                content = content.Concat(parameterService.Get()).ToDictionary(_ => _.Key, _ => _.Value);
+            }
 
             _logFlakeService.WriteLog(level, logMessage, correlationService.Correlation, content);
         }
