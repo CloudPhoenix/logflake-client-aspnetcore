@@ -10,7 +10,7 @@ public static class IServiceCollectionExtensionsAspNet
     public static IServiceCollection ConfigureLogFlakeMiddlewareOptions(this IServiceCollection services, IConfiguration configuration, CorrelationType correlationType = CorrelationType.Guid)
     {
         services.AddScoped<IParameterService, ParameterService>();
-        
+
         TryRegisterCorrelationService(services, correlationType);
 
         _ = services.Configure<LogFlakeMiddlewareSettingsOptions>(configuration.GetSection(LogFlakeMiddlewareSettingsOptions.SectionName));
