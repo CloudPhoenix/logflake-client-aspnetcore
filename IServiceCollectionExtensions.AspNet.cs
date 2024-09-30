@@ -20,6 +20,8 @@ public static class IServiceCollectionExtensionsAspNet
 
     private static void TryRegisterCorrelationService(IServiceCollection services, CorrelationType correlationType)
     {
+        if (correlationType == CorrelationType.Custom) return;
+
         if (correlationType == CorrelationType.Guid)
         {
             services.AddScoped<ICorrelationService, GuidCorrelationService>();

@@ -4,4 +4,5 @@ public enum CorrelationType
 {
     Guid,
     TraceIdentifier,
+    Custom,
 }

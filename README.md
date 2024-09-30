@@ -36,6 +36,9 @@ services.AddSingleton<IConfigureOptions<LogFlakeMiddlewareOptions>, ConfigureLog
 ```csharp
 services.ConfigureLogFlakeMiddlewareOptions(configuration);
 ```
+> Note: You can choose between a `Guid`, a [TraceIdentifier](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.httpcontext.traceidentifier) or a Custom correlation id.
+
+> Note: In order to use a Custom correlation id you must implement and register `ICorrelationService` interface (suggestion: as a AddScoped).
 5. Register the middleare on your `WebApplication`
 ```csharp
 app.UseLogFlakeMiddleware();
