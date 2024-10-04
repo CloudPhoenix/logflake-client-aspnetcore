@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Http;
-
 namespace NLogFlake.Services;
 
 public class GuidCorrelationService : ICorrelationService
