@@ -1,4 +1,4 @@
-# LogFlake Client .NET Core ![Version](https://img.shields.io/badge/version-1.7.0-blue.svg?cacheSeconds=2592000)
+# LogFlake Client ASP.NET Core ![Version](https://img.shields.io/badge/version-1.7.0-blue.svg?cacheSeconds=2592000)
 
 > This repository contains the sources for the client-side components of the LogFlake product suite for applications logs and performance collection for ASP.NET applications.
 
@@ -10,7 +10,7 @@
 |:-:|:-:|:-:|
 | [LogFlake.Client.AspNetCore](https://www.nuget.org/packages/LogFlake.Client.AspNetCore) | ![NuGet Version](https://img.shields.io/nuget/v/logflake.client.aspnetcore) | ![NuGet Downloads](https://img.shields.io/nuget/dt/logflake.client.aspnetcore) |
 
-## Dependecies
+## Dependencies
 This package depends on [LogFlake.Client.NetCore](https://www.nuget.org/packages/LogFlake.Client.NetCore).    
 Please refer to the documentation of that package for usage instructions.
 
@@ -39,7 +39,7 @@ services.ConfigureLogFlakeMiddlewareOptions(configuration);
 > Note: You can choose between a `Guid`, a [TraceIdentifier](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.httpcontext.traceidentifier) or a Custom correlation id.
 
 > Note: In order to use a Custom correlation id you must implement and register `ICorrelationService` interface (suggestion: as a AddScoped).
-5. Register the middleare on your `WebApplication`
+5. Register the middleware on your `WebApplication`
 ```csharp
 app.UseLogFlakeMiddleware();
 ```
