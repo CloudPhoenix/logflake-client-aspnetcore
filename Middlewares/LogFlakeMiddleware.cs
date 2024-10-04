@@ -39,18 +39,12 @@ public class LogFlakeMiddleware
 
         string fullPath = httpContext.Request.GetDisplayUrl();
 
-        string? endpointForPerformance = _logFlakeMiddlewareOptions.GetPerformanceMonitorLabel(httpContext);
-        if (string.IsNullOrWhiteSpace(endpointForPerformance))
-        {
-            endpointForPerformance = fullPath;
-        }
-
         IPerformanceCounter? performance = null;
 
         bool ignoreLogProcessing = _logFlakeMiddlewareOptions.IgnoreLogProcessing(httpContext);
         if (!ignoreLogProcessing)
         {
-            performance = _logFlakeService.MeasurePerformance(endpointForPerformance);
+            performance = _logFlakeService.MeasurePerformance();
         }
 
         Stream originalResponseStream = null!;
@@ -60,12 +54,20 @@ public class LogFlakeMiddleware
 
         if (_logFlakeMiddlewareOptions.GlobalExceptionHandler)
         {
-            await tryNext(httpContext, ignoreLogProcessing, correlationService.Correlation);
+            await tryNextAsync(httpContext, ignoreLogProcessing, correlationService.Correlation);
         }
         else
         {
             await _next(httpContext);
         }
+
+        string? endpointForPerformance = _logFlakeMiddlewareOptions.GetPerformanceMonitorLabel(httpContext);
+        if (string.IsNullOrWhiteSpace(endpointForPerformance))
+        {
+            endpointForPerformance = fullPath;
+        }
+
+        performance?.SetLabel(endpointForPerformance);
 
         if (NotExistingEndpoint(httpContext) && !_logFlakeMiddlewareSettingsOptions.LogNotFoundErrors)
         {
@@ -116,7 +118,7 @@ public class LogFlakeMiddleware
         }
     }
 
-    private async Task tryNext(HttpContext httpContext, bool ignoreLogProcessing, string correlation)
+    private async Task tryNextAsync(HttpContext httpContext, bool ignoreLogProcessing, string correlation)
     {
         try
         {

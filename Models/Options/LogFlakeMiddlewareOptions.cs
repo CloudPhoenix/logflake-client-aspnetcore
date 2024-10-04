@@ -6,7 +6,7 @@ public class LogFlakeMiddlewareOptions
 {
     public bool GlobalExceptionHandler { get; set; } = false;
 
-    public Func<HttpContext, Task> OnError { get; set; } = (httpContext) => { return Task.CompletedTask; };
+    public Func<HttpContext, Task> OnError { get; set; } = (httpContext) => Task.CompletedTask;
 
     public Func<HttpContext, string?> GetPerformanceMonitorLabel { get; set; } = (httpContext) => string.Empty;
 
