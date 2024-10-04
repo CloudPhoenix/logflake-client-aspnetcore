@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.Extensions.Options;
 using NLogFlake.Helpers;
@@ -60,7 +60,7 @@ public class LogFlakeMiddleware
 
         if (_logFlakeMiddlewareOptions.GlobalExceptionHandler)
         {
-            await tryNext(httpContext, ignoreLogProcessing, correlationService.Correlation);
+            await tryNextAsync(httpContext, ignoreLogProcessing, correlationService.Correlation);
         }
         else
         {
@@ -116,7 +116,7 @@ public class LogFlakeMiddleware
         }
     }
 
-    private async Task tryNext(HttpContext httpContext, bool ignoreLogProcessing, string correlation)
+    private async Task tryNextAsync(HttpContext httpContext, bool ignoreLogProcessing, string correlation)
     {
         try
         {
