@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.Extensions.Options;
 using NLogFlake.Helpers;
@@ -39,18 +39,12 @@ public class LogFlakeMiddleware
 
         string fullPath = httpContext.Request.GetDisplayUrl();
 
-        string? endpointForPerformance = _logFlakeMiddlewareOptions.GetPerformanceMonitorLabel(httpContext);
-        if (string.IsNullOrWhiteSpace(endpointForPerformance))
-        {
-            endpointForPerformance = fullPath;
-        }
-
         IPerformanceCounter? performance = null;
 
         bool ignoreLogProcessing = _logFlakeMiddlewareOptions.IgnoreLogProcessing(httpContext);
         if (!ignoreLogProcessing)
         {
-            performance = _logFlakeService.MeasurePerformance(endpointForPerformance);
+            performance = _logFlakeService.MeasurePerformance();
         }
 
         Stream originalResponseStream = null!;
@@ -66,6 +60,14 @@ public class LogFlakeMiddleware
         {
             await _next(httpContext);
         }
+
+        string? endpointForPerformance = _logFlakeMiddlewareOptions.GetPerformanceMonitorLabel(httpContext);
+        if (string.IsNullOrWhiteSpace(endpointForPerformance))
+        {
+            endpointForPerformance = fullPath;
+        }
+
+        performance?.SetLabel(endpointForPerformance);
 
         if (NotExistingEndpoint(httpContext) && !_logFlakeMiddlewareSettingsOptions.LogNotFoundErrors)
         {
