@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.Extensions.Options;
+using NLogFlake.Extensions;
 using NLogFlake.Helpers;
 using NLogFlake.Models.Options;
 using NLogFlake.Services;
@@ -111,7 +112,7 @@ public class LogFlakeMiddleware
 
             if (!parameterService.IsEmpty())
             {
-                content = content.Concat(parameterService.Get()).ToDictionary(_ => _.Key, _ => _.Value);
+                content = content.Merge(parameterService.Get());
             }
 
             _logFlakeService.WriteLog(level, logMessage, correlationService.Correlation, content);
