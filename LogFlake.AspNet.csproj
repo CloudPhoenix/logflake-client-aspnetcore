@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <PackageId>LogFlake.Client.AspNetCore</PackageId>
-    <Version>1.8.2</Version>
+    <Version>1.8.3</Version>
     <Authors>CloudPhoenix Srl</Authors>
     <Company>CloudPhoenix Srl</Company>
     <TargetFramework>netstandard2.1</TargetFramework>
