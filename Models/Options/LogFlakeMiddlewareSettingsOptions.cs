@@ -9,6 +9,4 @@ public sealed class LogFlakeMiddlewareSettingsOptions
     public bool LogResponse { get; set; }
 
     public bool LogNotFoundErrors { get; set; }
-
-    public string? ClientIdSelector { get; set; }
 }

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.Extensions.Options;
 using NLogFlake.Extensions;
@@ -108,7 +108,7 @@ public class LogFlakeMiddleware
         {
             string logMessage = $"{httpContext.Request.Method} {httpContext.Request.Path} status {httpContext.Response.StatusCode} in {performance!.Stop():N0} ms";
 
-            Dictionary<string, object> content = await HttpContextHelper.GetLogParametersAsync(httpContext, _logFlakeMiddlewareSettingsOptions.ClientIdSelector, response);
+            Dictionary<string, object> content = await HttpContextHelper.GetLogParametersAsync(httpContext, response);
 
             if (!parameterService.IsEmpty())
             {
