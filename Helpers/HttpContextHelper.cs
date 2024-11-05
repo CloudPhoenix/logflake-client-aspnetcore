@@ -8,7 +8,7 @@ namespace NLogFlake.Helpers;
 
 internal static class HttpContextHelper
 {
-    internal static async Task<Dictionary<string, object>> GetLogParametersAsync(HttpContext httpContext, string? clientIdSelector, string? response)
+    internal static async Task<Dictionary<string, object>> GetLogParametersAsync(HttpContext httpContext, string? response)
     {
         Dictionary<string, object> logParameters = new()
         {
@@ -21,16 +21,6 @@ internal static class HttpContextHelper
         if (!string.IsNullOrWhiteSpace(request))
         {
             logParameters.Add(RequestBodyKey, request);
-        }
-
-        if (!string.IsNullOrEmpty(clientIdSelector) && httpContext.User is not null)
-        {
-            Claim clientIdClaim = httpContext.User.FindFirst(clientIdSelector);
-
-            if (clientIdClaim is not null && !string.IsNullOrWhiteSpace(clientIdClaim.Value))
-            {
-                logParameters.Add(ClientIdKey, clientIdClaim.Value);
-            }
         }
 
         if (!string.IsNullOrEmpty(response))

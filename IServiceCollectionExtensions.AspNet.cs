@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using NLogFlake.Models.Options;
 using NLogFlake.Services;
 
@@ -9,7 +10,7 @@ public static class IServiceCollectionExtensionsAspNet
 {
     public static IServiceCollection ConfigureLogFlakeMiddlewareOptions(this IServiceCollection services, IConfiguration configuration, CorrelationType correlationType = CorrelationType.Guid)
     {
-        services.AddScoped<IParameterService, ParameterService>();
+        services.TryAddScoped<IParameterService, ParameterService>();
 
         TryRegisterCorrelationService(services, correlationType);
 
