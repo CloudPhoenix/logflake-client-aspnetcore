@@ -1,7 +1,7 @@
 
 namespace NLogFlake.Services;
 
-public class ParameterService : IParameterService
+internal class ParameterService : IParameterService
 {
     private readonly Dictionary<string, object> _parameters;
 
