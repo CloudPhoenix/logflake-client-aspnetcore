@@ -49,9 +49,8 @@ public class LogFlakeMiddleware
 
         httpContext.Request.EnableBuffering();
 
-        Stream originalResponseStream;
         using MemoryStream memoryStream = new();
-        originalResponseStream = httpContext.Response.Body;
+        Stream originalResponseStream = httpContext.Response.Body;
         httpContext.Response.Body = memoryStream;
 
         if (_logFlakeMiddlewareOptions.GlobalExceptionHandler)
