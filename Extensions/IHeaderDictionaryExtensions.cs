@@ -7,7 +7,7 @@ internal static class IHeaderDictionaryExtensions
 {
     internal static IHeaderDictionary MaskAuthorizationHeader(this IHeaderDictionary headers)
     {
-        if (!headers.Any(h => h.Key == HeaderNames.Authorization)) return headers;
+        if (headers.All(h => h.Key != HeaderNames.Authorization)) return headers;
 
         string auth = headers[HeaderNames.Authorization]!;
         if (auth.Length > 14)
