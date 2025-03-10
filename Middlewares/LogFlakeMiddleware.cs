@@ -36,26 +36,27 @@ public class LogFlakeMiddleware
             throw new ArgumentNullException(nameof(httpContext));
         }
 
-        httpContext.Request.EnableBuffering();
-
-        string fullPath = httpContext.Request.GetDisplayUrl();
-
-        IPerformanceCounter? performance = null;
-
         bool ignoreLogProcessing = _logFlakeMiddlewareOptions.IgnoreLogProcessing(httpContext);
-        if (!ignoreLogProcessing)
+        if (ignoreLogProcessing)
         {
-            performance = _logFlakeService.MeasurePerformance();
+            await _next(httpContext);
+            return;
         }
 
-        Stream originalResponseStream = null!;
+        string correlation = correlationService.Correlation;
+
+        IPerformanceCounter performance = _logFlakeService.MeasurePerformance();
+
+        httpContext.Request.EnableBuffering();
+
+        Stream originalResponseStream;
         using MemoryStream memoryStream = new();
         originalResponseStream = httpContext.Response.Body;
         httpContext.Response.Body = memoryStream;
 
         if (_logFlakeMiddlewareOptions.GlobalExceptionHandler)
         {
-            await tryNextAsync(httpContext, ignoreLogProcessing, correlationService.Correlation);
+            await tryNextAsync(httpContext, correlation);
         }
         else
         {
@@ -65,12 +66,12 @@ public class LogFlakeMiddleware
         string? endpointForPerformance = _logFlakeMiddlewareOptions.GetPerformanceMonitorLabel(httpContext);
         if (string.IsNullOrWhiteSpace(endpointForPerformance))
         {
-            endpointForPerformance = fullPath;
+            endpointForPerformance = httpContext.Request.GetDisplayUrl();
         }
 
-        performance?.SetLabel(endpointForPerformance);
+        performance.SetLabel(endpointForPerformance);
 
-        if (NotExistingEndpoint(httpContext) && !_logFlakeMiddlewareSettingsOptions.LogNotFoundErrors)
+        if (httpContext.NotExistingEndpoint() && !_logFlakeMiddlewareSettingsOptions.LogNotFoundErrors)
         {
             return;
         }
@@ -96,7 +97,7 @@ public class LogFlakeMiddleware
                 break;
         }
 
-        if (httpContext.Response.StatusCode >= StatusCodes.Status400BadRequest && EmptyResponseBody(httpContext))
+        if (httpContext.Response.StatusCode >= StatusCodes.Status400BadRequest && httpContext.EmptyResponseBody())
         {
             await _logFlakeMiddlewareOptions.OnError(httpContext);
         }
@@ -104,7 +105,7 @@ public class LogFlakeMiddleware
         memoryStream.Position = 0;
         await memoryStream.CopyToAsync(originalResponseStream);
 
-        if (_logFlakeMiddlewareSettingsOptions.LogRequest && !ignoreLogProcessing)
+        if (_logFlakeMiddlewareSettingsOptions.LogRequest)
         {
             string logMessage = $"{httpContext.Request.Method} {httpContext.Request.Path} status {httpContext.Response.StatusCode} in {performance!.Stop():N0} ms";
 
@@ -115,11 +116,11 @@ public class LogFlakeMiddleware
                 content = content.Merge(parameterService.Get());
             }
 
-            _logFlakeService.WriteLog(level, logMessage, correlationService.Correlation, content);
+            _logFlakeService.WriteLog(level, logMessage, correlation, content);
         }
     }
 
-    private async Task tryNextAsync(HttpContext httpContext, bool ignoreLogProcessing, string correlation)
+    private async Task tryNextAsync(HttpContext httpContext, string correlation)
     {
         try
         {
@@ -127,10 +128,7 @@ public class LogFlakeMiddleware
         }
         catch (Exception ex)
         {
-            if (!ignoreLogProcessing)
-            {
-                _logFlakeService.WriteException(ex, correlation);
-            }
+            _logFlakeService.WriteException(ex, correlation);
 
             if (!httpContext.Response.HasStarted)
             {
@@ -138,8 +136,4 @@ public class LogFlakeMiddleware
             }
         }
     }
-
-    private static bool NotExistingEndpoint(HttpContext httpContext) => httpContext.Response.StatusCode == StatusCodes.Status404NotFound && !httpContext.Response.Headers.Any();
-
-    private static bool EmptyResponseBody(HttpContext httpContext) => httpContext.Response.Body is null || httpContext.Response.Body.Length == 0;
 }
