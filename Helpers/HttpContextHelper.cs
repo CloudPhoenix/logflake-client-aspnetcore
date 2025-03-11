@@ -1,6 +1,6 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
+using NLogFlake.Extensions;
 
 using static NLogFlake.Constants.LogParameterConstants;
 
@@ -14,7 +14,7 @@ internal static class HttpContextHelper
         {
             { RequestUriKey, new Uri(httpContext.Request.GetDisplayUrl()) },
             { RequestMethodKey, httpContext.Request.Method },
-            { RequestHeadersKey, httpContext.Request.Headers },
+            { RequestHeadersKey, httpContext.Request.Headers.MaskAuthorizationHeader() },
         };
 
         string? request = await GetStringBodyAsync(httpContext.Request.Body);

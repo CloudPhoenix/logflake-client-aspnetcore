@@ -11,7 +11,7 @@
 | [LogFlake.Client.AspNetCore](https://www.nuget.org/packages/LogFlake.Client.AspNetCore) | ![NuGet Version](https://img.shields.io/nuget/v/logflake.client.aspnetcore) | ![NuGet Downloads](https://img.shields.io/nuget/dt/logflake.client.aspnetcore) |
 
 ## Dependencies
-This package depends on [LogFlake.Client.NetCore](https://www.nuget.org/packages/LogFlake.Client.NetCore).    
+This package depends on [LogFlake.Client.NetCore](https://www.nuget.org/packages/LogFlake.Client.NetCore).
 Please refer to the documentation of that package for usage instructions.
 
 ## Usage
@@ -20,23 +20,30 @@ Please refer to the documentation of that package for usage instructions.
 "LogFlakeMiddlewareSettings": {
     "LogRequest": true,
     "LogResponse": true,
-    "LogNotFoundErrors": true,
+    "LogNotFoundErrors": true
 },
 ```
 All of them are optional, if a boolean property it's missing, the default value is `false`;
 
-2. Create a class (name it something like `ConfigureLogFlakeMiddlewareOptions`) that implements `IConfigureOptions<LogFlakeMiddlewareOptions>` and configure each property;
+2. Create a class (name it something like `ConfigureLogFlakeMiddlewareOptions`) that implements `IConfigureOptions<LogFlakeMiddlewareOptions>` and configure each property as preferred:
+- `GlobalExceptionHandler`: This flag let you specify if you want the LogFlakeMiddleware try & catch all the unhandled exceptions in your application. When the flag is set to `true`, the `next` method will be surrounded by a try / catch block. In case of any unhandled exception, the `OnError` will be called.
+- `OnError`: This function will be called when the middleware encounters a Status Code that is greater or equal to 400, and the Body's response is empty, so you can customize the response depending on the case;
+- `GetPerformanceMonitorLabel`: For ASP.NET applications, the performance label should be a string representing the Uri with placeholders for variables instead of actual values. Due some limitations of the .NET Standard framework, the `Endpoint` of the `HttpContext` cannot be easily accessed inside a Class Library. But you can write your own implementation in order to get a performance label.
+ℹ️ Suggestion: Use the [RoutePattern](https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.routing.routeendpoint.routepattern#microsoft-aspnetcore-routing-routeendpoint-routepattern) property of the [RouteEndpoint](https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.routing.routeendpoint) instance taken from `httpContext.GetEndpoint()`.
+- `IgnoreLogProcessing`: This method will be invocated on each invocation of the middleware to understand if the current request has to be logged or not. It's recommended to use the `LogFlakeIgnoreAttribute` on the action you want to ignore and check in this method if it's present or not.
+
 3. Register your class as a Singleton:
 ```csharp
 services.AddSingleton<IConfigureOptions<LogFlakeMiddlewareOptions>, ConfigureLogFlakeMiddlewareOptions>();
 ```
-4. After calling `services.AddLogFlake(configuration);`, add the following line of code:
+4. After calling `services.AddLogFlake(configuration);`, register LogFlakeMiddleware by adding the following line of code:
 ```csharp
 services.ConfigureLogFlakeMiddlewareOptions(configuration);
 ```
-> Note: You can choose between a `Guid`, a [TraceIdentifier](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.httpcontext.traceidentifier) or a Custom correlation id.
+> Note: The middleware registration will also require a `CorrelationId`, by default the middleware uses a `Guid`.
+You can customize this behavior passing a `CorrelationType` to the method above, you can also choose a [TraceIdentifier](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.httpcontext.traceidentifier) or a Custom `CorrelationId`.
 
-> Note: In order to use a Custom correlation id you must implement and register `ICorrelationService` interface (suggestion: as a AddScoped).
+> Note: In order to use a Custom `CorrelationId` you must implement and register (as a AddScoped) `ICorrelationService` interface.
 5. Register the middleware on your `WebApplication`
 ```csharp
 app.UseLogFlakeMiddleware();
