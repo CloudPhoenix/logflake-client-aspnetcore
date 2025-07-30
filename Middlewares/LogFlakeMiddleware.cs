@@ -106,7 +106,7 @@ public class LogFlakeMiddleware
 
         if (_logFlakeMiddlewareSettingsOptions.LogRequest)
         {
-            string logMessage = $"{httpContext.Request.Method} {httpContext.Request.Path} status {httpContext.Response.StatusCode} in {performance!.Stop():N0} ms";
+            string logMessage = $"{httpContext.Request.Method} {httpContext.Request.Path} status {httpContext.Response.StatusCode} in {performance.Stop():N0} ms";
 
             Dictionary<string, object> content = await HttpContextHelper.GetLogParametersAsync(httpContext, response);
 
