@@ -82,19 +82,13 @@ public class LogFlakeMiddleware
             response = new StreamReader(memoryStream).ReadToEnd();
         }
 
-        LogLevels level = LogLevels.DEBUG;
-        switch (httpContext.Response.StatusCode)
+        LogLevels level = httpContext.Response.StatusCode switch
         {
-            case >= 500:
-                level = LogLevels.ERROR;
-                break;
-            case >= 400:
-                level = LogLevels.WARN;
-                break;
-            case >= 300:
-                level = LogLevels.INFO;
-                break;
-        }
+            >= 500 => LogLevels.ERROR,
+            >= 400 => LogLevels.WARN,
+            >= 300 => LogLevels.INFO,
+            _ => LogLevels.DEBUG,
+        };
 
         if (httpContext.Response.StatusCode >= StatusCodes.Status400BadRequest && httpContext.EmptyResponseBody())
         {
