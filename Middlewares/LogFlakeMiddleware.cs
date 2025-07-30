@@ -43,9 +43,10 @@ public class LogFlakeMiddleware
             return;
         }
 
+        string performanceLabel = httpContext.Request.Path;
         string correlation = correlationService.Correlation;
 
-        IPerformanceCounter performance = _logFlakeService.MeasurePerformance();
+        IPerformanceCounter performance = _logFlakeService.MeasurePerformance(performanceLabel);
 
         httpContext.Request.EnableBuffering();
 
@@ -62,13 +63,13 @@ public class LogFlakeMiddleware
             await _next(httpContext);
         }
 
-        string? endpointForPerformance = _logFlakeMiddlewareOptions.GetPerformanceMonitorLabel(httpContext);
-        if (string.IsNullOrWhiteSpace(endpointForPerformance))
+        performanceLabel = _logFlakeMiddlewareOptions.GetPerformanceMonitorLabel(httpContext);
+        if (string.IsNullOrWhiteSpace(performanceLabel))
         {
-            endpointForPerformance = httpContext.Request.GetDisplayUrl();
+            performanceLabel = httpContext.Request.Path;
         }
 
-        performance.SetLabel(endpointForPerformance);
+        performance.SetLabel(performanceLabel);
 
         if (httpContext.NotExistingEndpoint() && !_logFlakeMiddlewareSettingsOptions.LogNotFoundErrors)
         {
