@@ -1,12 +1,12 @@
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
 using NLogFlake.Models.Options;
 using NLogFlake.Services;
 
 namespace NLogFlake;
 
-public static class IServiceCollectionExtensionsAspNet
+public static class IHostApplicationBuilderExtensionsAspNet
 {
     /// <summary>
     /// Configures LogFlake middleware options and registers required services for correlation and parameter handling.
@@ -14,20 +14,21 @@ public static class IServiceCollectionExtensionsAspNet
     /// <remarks>This method registers the necessary services and configures options required for LogFlake
     /// middleware integration. It should be called during application startup as part of service
     /// configuration.
-    /// Note: this method may be removed in following version, please move to <see cref="IHostApplicationBuilderExtensionsAspNet.ConfigureLogFlakeMiddlewareOptions(Microsoft.Extensions.Hosting.IHostApplicationBuilder, CorrelationType)"/></remarks>
     /// <param name="services">The service collection to which the LogFlake middleware services and options will be added. Cannot be null.</param>
     /// <param name="configuration">The application configuration from which LogFlake middleware settings will be read. Cannot be null.</param>
     /// <param name="correlationType">The type of correlation identifier to use for request tracking. The default is CorrelationType.Guid.</param>
     /// <returns>The same IServiceCollection instance, enabling method chaining.</returns>
-    public static IServiceCollection ConfigureLogFlakeMiddlewareOptions(this IServiceCollection services, IConfiguration configuration, CorrelationType correlationType = CorrelationType.Guid)
+    public static IHostApplicationBuilder ConfigureLogFlakeMiddlewareOptions(this IHostApplicationBuilder builder, CorrelationType correlationType = CorrelationType.Guid)
     {
+        IServiceCollection services = builder.Services;
+
         services.TryAddScoped<IParameterService, ParameterService>();
 
         TryRegisterCorrelationService(services, correlationType);
 
-        _ = services.Configure<LogFlakeMiddlewareSettingsOptions>(configuration.GetSection(LogFlakeMiddlewareSettingsOptions.SectionName));
+        _ = services.Configure<LogFlakeMiddlewareSettingsOptions>(builder.Configuration.GetSection(LogFlakeMiddlewareSettingsOptions.SectionName));
 
-        return services;
+        return builder;
     }
 
     private static void TryRegisterCorrelationService(IServiceCollection services, CorrelationType correlationType)
